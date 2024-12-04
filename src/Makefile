@@ -1,4 +1,4 @@
 build:
-		gcc main.c -o tema1 -lpthread
+	g++ main.cpp -o tema1 -lpthread
 clean:
-		rm tema1
+	rm tema1
