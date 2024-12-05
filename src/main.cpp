@@ -15,6 +15,7 @@ struct mapper_args {
     vector<map<string, int>>* partial_list;
 };
 
+// structura pt argumentele functiei de reduceri
 struct reducer_args {
     vector<map<string, int>>* partial_list;
     pthread_mutex_t* mutex;
@@ -25,7 +26,8 @@ struct reducer_args {
 
 bool map_cmp(const pair<string, vector<int>>& a, const pair<string, vector<int>>& b)
 {
-    // se sorteaza map-urile descrescator in functie de numarul de aparitii
+    // se sorteaza perechile {cuvant, {id_file}} descrescator
+    // in functie de numarul de aparitii a cuvantului in fisiere
     // si apoi crescator alfabetic
     if (a.second.size() == b.second.size()) {
         return a.first < b.first;
@@ -54,6 +56,7 @@ queue<pair<string, int>> create_queue(string file)
     string filename;
     for (int i = 0; i < nr_files; i++) {
         // citim numele fisierelor si le adaugam in coada
+        // cu tot cu id-ul lor
         main_file >> filename;
         files.push({filename, i + 1});
     }
@@ -79,7 +82,7 @@ void* mappers_func(void* args)
     while (true) {
         pthread_mutex_lock(mutex);
 
-        // daca nu mai sunt fisiere de procesat, mapperii scutura mainile
+        // daca nu mai sunt fisiere de procesat ne oprim
         if (files->empty()) {
             pthread_mutex_unlock(mutex);
             break;
@@ -105,13 +108,13 @@ void* mappers_func(void* args)
         // se citeste continutul fisierului --cuvant cu cuvant
         while (input_file >> word) {
             // se transforma cuvantul in lowercase
-            for (int i = 0; i < word.size(); i++) {
+            for (size_t i = 0; i < word.size(); i++) {
                 word[i] = tolower(word[i]);
             }
 
             // se verifica daca cuvantul are caractere speciale
             // --daca da, se elimina
-            for (int i = 0; i < word.size(); i++) {
+            for (size_t i = 0; i < word.size(); i++) {
                 if (!isalpha(word[i])) {
                     word.erase(i, 1);
                     i--;
@@ -183,8 +186,8 @@ void* reducers_func(void *args)
         }
 
         map<string, vector<int>> aux;
-        // se cauta cuvintele din map-urile partiale care incepe cu litera curenta
-        for (int i = 0; i < partial_list->size(); i++) {
+        // se cauta cuvintele din map-urile partiale care incep cu litera curenta
+        for (size_t i = 0; i < partial_list->size(); i++) {
             for (auto map = (*partial_list)[i].begin(); map != (*partial_list)[i].end(); map++) {
                 // daca cuvantul incepe cu litera curenta
                 if (map->first[0] == letter) {
@@ -208,9 +211,9 @@ void* reducers_func(void *args)
             sort(pair.second.begin(), pair.second.end());
         }
 
-        // se adauga sortarea in lista finala
+        // se adauga sortarea in lista finala a reducerilor
         pthread_mutex_lock(mutex);
-        for (int i = 0; i < map_to_vector.size(); i++) {
+        for (size_t i = 0; i < map_to_vector.size(); i++) {
             (*final_list).push_back(map_to_vector[i]);
         }
         pthread_mutex_unlock(mutex);
@@ -313,15 +316,6 @@ int main(int argc, char **argv)
     // se distruge bariera
     pthread_barrier_destroy(&m_barrier);
 
-    // // se afiseaza continutul listei finale
-    // for (int i = 0; i < final_list.size(); i++) {
-    //     cout << final_list[i].first << ": ";
-    //     for (int j = 0; j < final_list[i].second.size(); j++) {
-    //         cout << final_list[i].second[j] << " ";
-    //     }
-    //     cout << endl;
-    // }
-
     // se scrie in fisierul de output
     for (char letter = 'a'; letter <= 'z'; letter++) {
         string filename;
@@ -335,10 +329,10 @@ int main(int argc, char **argv)
         }
 
         // se scrie in fisierul corespunzator literei
-        for (int i = 0; i < final_list.size(); i++) {
+        for (size_t i = 0; i < final_list.size(); i++) {
             if (final_list[i].first[0] == letter) {
                 letter_file << final_list[i].first << ":[";
-                for (int j = 0; j < final_list[i].second.size(); j++) {
+                for (size_t j = 0; j < final_list[i].second.size(); j++) {
                     if (j != final_list[i].second.size() - 1) {
                         letter_file << final_list[i].second[j] << " ";
                     } else {
@@ -349,6 +343,9 @@ int main(int argc, char **argv)
                 letter_file << endl;
             }
         }
+
+        // se inchide fisierul
+        letter_file.close();
     }
 
     return 0;

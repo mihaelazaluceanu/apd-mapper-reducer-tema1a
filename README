@@ -1,0 +1,35 @@
+Zaluceanu Mihaela 334CC Tema1a
+
+    Am colectat argumentele primite in linia de comanda pentru a obtine numele
+fisierului main ce trebuie deschis. Mi am creat o lista de threaduri in care
+urmeaza sa retin mapparii si reducerii.
+Am deschis fisierul principal si am bagat intr o coada toate fisierele impreuna
+cu id ul lor.
+
+    Pentru mappari, mi am creat o structura pe care o trimit ca argument in functia
+mapparilor. Fiacre mappar scoate din coada cate un fisier si incepe sa l prelucreze.
+Citeste cuvant cu cuvant din fisier, se asigura ca e lowercase si ca n are nici un
+caracter special, dup acare il adauga intr un map<string, int> = {cuvant, id_file}.
+Fiecare mapper creaza cate un map per fisierul prelucrat. Map ul rezultat e adugat
+intr un vector comun de map uri (create si de restu mapperilor).
+    Folosesc mutex pentru a evita race condition urile, atat la pop() din coada cat
+si la push_back() in vectorul comun.
+    Mai folosesc si o bariera pentru a astepta toti mapparii din a si face treaba.
+
+    Pentru reduceri, mi am creat o alta structura pe care, de asemenea, o trimit ca
+argument in functia lor.
+    Am impartit reducerii sa prelucreze cuvintele care incep cu o anumita litera; pentru
+asta, am creat o coada in care am bagta toate literele a-z. Fiecare reducer extrage cate
+o litera, cauta in lista partiala cuvintele care incep cu litera respectiva. Cuvantul gasit
+e adaugat intr un map auxiliar daca nu exista sau, se adauga doar id_file ul in care a fost
+gasit daca cuvantul e deja in map ul aux.
+Dupa ce se termina de prelucrat litera, map ul auxiliar e sortat descrescator dupa nr de
+aparitii a cuvantului in fisiere apoi alfabetic, si dupa e adaugat intr o lista finala.
+    Pentru reduceri am folosit de asemenea un mutex pentru a evita race condition urile la
+pop() ul din coada si push_back() ul in lista finala.
+    Am utilizat si o bariera, aceiasi bariera ca si pentru mappari, pentru ca nu cumva un
+reducer sa porneasca sa faca ceva inainte ca mapperii sa termine.
+
+    In main, dau join() la toate threadurile si creez fisierele de out.
+Pentru fiecare litera din alfabet deschid fisierul corespunzator. Parcurg lista finala si
+caut cuvintele care incep cu litera curenta pentru a le adauga in fisier ul aferent.
